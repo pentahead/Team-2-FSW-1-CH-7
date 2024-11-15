@@ -9,9 +9,10 @@ import {
   ListGroup,
   Card,
   Accordion,
-  DropdownButton,
 } from "react-bootstrap";
+import { useRef } from "react";
 import GuestLayout from "../layouts/GuestLayout";
+
 export const Route = createLazyFileRoute("/")({
   component: Index,
 });
@@ -348,6 +349,14 @@ const WhyUs = () => {
 };
 
 const Testimonial = () => {
+  const ref = useRef(null);
+
+  const onPrevClick = () => {
+    ref.current.prev();
+  };
+  const onNextClick = () => {
+    ref.current.next();
+  };
   return (
     <>
       <section id="testimonial">
@@ -358,7 +367,7 @@ const Testimonial = () => {
           </Row>
 
           <Row className="d-flex justify-content-center">
-            <Carousel id="carouselExample" className="py-3">
+            <Carousel id="carouselExample" className="py-3" ref={ref}>
               <Carousel.Item className="active">
                 <Card>
                   <Card.Body>
@@ -367,7 +376,7 @@ const Testimonial = () => {
                         lg={3}
                         className="d-flex justify-content-center align-items-center"
                       >
-                        <img src="img/img_photo.png" alt="" />
+                        <img src="img/img_photo.png" alt="profile_pict" />
                       </Col>
                       <Col lg={9}>
                         <ListGroup className="d-flex flex-row justify-content-lg-start justify-content-center my-3 p-0 m-lg-0">
@@ -389,13 +398,10 @@ const Testimonial = () => {
                           ))}
                         </ListGroup>
                         <p className="card-text">
-                          “Lorem ipsum dolor sit amet, consectetur adipiscing
-                          elit, sed do eiusmod lorem ipsum dolor sit amet,
-                          consectetur adipiscing elit, sed do eiusmod lorem
-                          ipsum dolor sit amet, consectetur adipiscing elit, sed
-                          do eiusmod”
+                          “Sopir yang profesional, berpengalaman, jujur, ramah
+                          dan selalu tepat waktu”
                         </p>
-                        <h5 className="card-title">John Dee 32, Bromo</h5>
+                        <h5 className="card-title">Alan Baker 22, Jakarta</h5>
                       </Col>
                     </Row>
                   </Card.Body>
@@ -410,7 +416,7 @@ const Testimonial = () => {
                         lg={3}
                         className="d-flex justify-content-center align-items-center"
                       >
-                        <img src="img/img_photo.png" alt="" />
+                        <img src="img/img_photo.png" alt="profile_pict" />
                       </Col>
                       <Col lg={9}>
                         <ListGroup className="d-flex flex-row  justify-content-lg-start justify-content-center my-3 p-0 m-lg-0">
@@ -432,13 +438,10 @@ const Testimonial = () => {
                           ))}
                         </ListGroup>
                         <p className="card-text">
-                          “Lorem ipsum dolor sit amet, consectetur adipiscing
-                          elit, sed do eiusmod lorem ipsum dolor sit amet,
-                          consectetur adipiscing elit, sed do eiusmod lorem
-                          ipsum dolor sit amet, consectetur adipiscing elit, sed
-                          do eiusmod”
+                          “Perjalanan menyenangkan dengan Binar Car Rental. Very
+                          well services Thank you a lot!”
                         </p>
-                        <h5 className="card-title">John Dee 32, Bromo</h5>
+                        <h5 className="card-title">Doni Gee 32, Padang</h5>
                       </Col>
                     </Row>
                   </Card.Body>
@@ -453,7 +456,7 @@ const Testimonial = () => {
                         lg={3}
                         className="d-flex justify-content-center align-items-center"
                       >
-                        <img src="/assets/img/img_photo (1).png" alt="" />
+                        <img src="img/img_photo.png" alt="profile_pict" />
                       </Col>
                       <Col lg={9}>
                         <ListGroup className="d-flex  flex-row justify-content-lg-start justify-content-center my-3 p-0 m-lg-0">
@@ -475,11 +478,8 @@ const Testimonial = () => {
                           ))}
                         </ListGroup>
                         <p className="card-text">
-                          “Lorem ipsum dolor sit amet, consectetur adipiscing
-                          elit, sed do eiusmod lorem ipsum dolor sit amet,
-                          consectetur adipiscing elit, sed do eiusmod lorem
-                          ipsum dolor sit amet, consectetur adipiscing elit, sed
-                          do eiusmod”
+                          “Harga murah dan bersaing, bisa dibandingkan harga
+                          dengan rental mobil lain. Good!”
                         </p>
                         <h5 className="card-title">John Dee 32, Bromo</h5>
                       </Col>
@@ -495,7 +495,7 @@ const Testimonial = () => {
               <button
                 className="bg-transparent border-0"
                 type="button"
-                data-bs-target="#carouselExample"
+                onClick={onPrevClick}
                 data-bs-slide="next"
               >
                 <svg
@@ -525,7 +525,7 @@ const Testimonial = () => {
               <button
                 className="bg-transparent border-0"
                 type="button"
-                data-bs-target="#carouselExample"
+                onClick={onNextClick}
                 data-bs-slide="prev"
               >
                 <svg
@@ -827,13 +827,13 @@ const Footer = () => {
 function Index() {
   return (
     <>
-      <GuestLayout >
-      <Hero />
-      <OurService />
-      <WhyUs />
-      <Testimonial />
-      <CtaBanner />
-      <Faq />
+      <GuestLayout>
+        <Hero />
+        <OurService />
+        <WhyUs />
+        <Testimonial />
+        <CtaBanner />
+        <Faq />
       </GuestLayout>
     </>
   );
