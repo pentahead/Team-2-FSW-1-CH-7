@@ -20,52 +20,40 @@ import {
   getDetailTransmission,
 } from "../../service/transmission";
 import { confirmAlert } from "react-confirm-alert";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ScreenTransmissions = () => {
   const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
 
   const [transmissions, setTransmissions] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [id, setId] = useState(null);
 
-  const getTransmissionData = async () => {
-    setIsLoading(true);
-    const result = await getTransmission();
-    if (result.success) {
-      setTransmissions(result.data);
-    }
-    setIsLoading(false);
-  };
+  const queryClient = useQueryClient();
+
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["transmissions"],
+    queryFn: () => getTransmission(),
+    enabled: !!token,
+    refetchOnWindowFocus: true,
+  });
 
   useEffect(() => {
-    if (token) {
-      getTransmissionData();
+    if (isSuccess) {
+      setTransmissions(data);
     }
-  }, [token]);
+  }, [isSuccess, data]);
 
-  if (!token) {
-    return (
-      <Row className="mt-4">
-        <Col>
-          <h1 className="text-center">
-            Please login first to get Transmission data!
-          </h1>
-        </Col>
-      </Row>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Row
-        className="mt-4 d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh" }}
-      >
-        <MoonLoader color="#1306ff" />
-      </Row>
-    );
-  }
+  const { mutate: deleting, isPending: onProses } = useMutation({
+    queryKey: ["transmissions", id],
+    mutationFn: (id) => deleteTransmission(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["transmissions"]);
+      toast.success("Data deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error?.message);
+    },
+  });
 
   const onDelete = async (event, id) => {
     event.preventDefault();
@@ -77,14 +65,7 @@ const ScreenTransmissions = () => {
         {
           label: "Yes",
           onClick: async () => {
-            const result = await deleteTransmission(id);
-            if (result?.success) {
-              toast.success("Data deleted successfully");
-              getTransmissionData();
-              return;
-            }
-
-            toast.error(result?.message);
+            deleting(id);
           },
         },
         {
@@ -110,13 +91,18 @@ const ScreenTransmissions = () => {
 
       <Row className="mt-3">
         <Col>
-          <CreateTransmission
-            onTransmissionCreated={getTransmissionData}
-            id={id}
-            setId={setId}
-          />
+          <CreateTransmission id={id} setId={setId} />
         </Col>
         <Col xs={6}>
+          {isLoading ||
+            (onProses && (
+              <Row
+                className="mt-4 d-flex justify-content-center align-items-center"
+                style={{ minHeight: "100vh" }}
+              >
+                <MoonLoader color="#1306ff" />
+              </Row>
+            ))}
           <ListGroup as="ul">
             {transmissions.length === 0 ? (
               <h1>Transmissions not found!</h1>
@@ -168,58 +154,49 @@ const ScreenTransmissions = () => {
 
 function CreateTransmission({ onTransmissionCreated, id, setId }) {
   const [transmissionName, setTransmissionName] = useState("");
-  const [transmissionRegion, setTransmissionRegion] = useState("");
-  const [year, setYear] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { mutate: transmissions, isPending: onProses } = useMutation({
+    mutationFn: (body) => {
+      return !id ? createTransmission(body) : updateTransmission(id, body);
+    },
+    onSuccess: () => {
+      setTransmissionName("");
+      setId(null);
+      queryClient.invalidateQueries(["transmissions"]);
+      toast.success("Data berhasil disimpan.");
+    },
+    onError: (err) => {
+      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
+    },
+  });
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true);
-
     const request = {
       transmissionName,
     };
 
-    const result = id
-      ? await updateTransmission(id, request)
-      : await createTransmission(request);
-
-    setIsLoading(false);
-
-    if (result?.success) {
-      toast.success("Data created successfully");
-      onTransmissionCreated();
-      setTransmissionName("");
-      setId(null);
-      return;
-    } else {
-      alert(result?.message);
-    }
-
-    toast.error(result?.message);
+    transmissions(request);
   };
 
-  useEffect(() => {
-    const fetchTransmissionDetail = async () => {
-      if (id) {
-        setIsLoading(true);
-        const result = await getDetailTransmission(id);
-        setIsLoading(false);
-        if (result?.success) {
-          setTransmissionName(result.data.transmission_name);
-          setYear(result.data.year);
-        }
-      }
-    };
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["manufactures", id],
+    queryFn: () => getDetailTransmission(id),
+    enabled: !!id,
+  });
 
-    fetchTransmissionDetail();
-  }, [id]);
+  useEffect(() => {
+    if (isSuccess) {
+      setTransmissionName(data.transmission_name);
+    }
+  }, [isSuccess, data, isError]);
 
   return (
     <Card>
       <Card.Header className="text-center">Create Transmission</Card.Header>
       <Card.Body>
-        {isLoading ? (
+        {isLoading || onProses ? (
           <div className="d-flex justify-content-center align-items-center">
             <MoonLoader color="#1306ff" />
           </div>

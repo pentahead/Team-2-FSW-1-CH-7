@@ -16,7 +16,7 @@ export const getType = async (typeName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const getDetailType = async (id) => {
@@ -33,7 +33,7 @@ export const getDetailType = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const createType = async (request) => {
@@ -88,5 +88,5 @@ export const deleteType = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };

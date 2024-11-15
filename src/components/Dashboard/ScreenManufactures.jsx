@@ -6,7 +6,6 @@ import {
   Row,
   Button,
   ListGroup,
-  Image,
   Card,
   Form,
 } from "react-bootstrap";
@@ -21,53 +20,51 @@ import {
 import { confirmAlert } from "react-confirm-alert";
 import { toast } from "react-toastify";
 import { MoonLoader } from "react-spinners";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ScreenManufactures = () => {
   const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const [manufactures, setManufactures] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
 
   const [id, setId] = useState(null);
 
-  const getManufactureData = async () => {
-    setIsLoading(true);
-    const result = await getManufacture();
-    if (result.success) {
-      setManufactures(result.data);
-    }
-    setIsLoading(false);
-  };
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["manufactures"],
+    queryFn: () => getManufacture(),
+    enabled: !!token,
+  });
+
+  const { mutate: deleting, isPending: isDeleteProcessing } = useMutation({
+    queryKey: ["manufactures", id],
+    mutationFn: (id) => deleteManufacture(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["manufactures"]);
+      toast.success("Data deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error?.message);
+    },
+  });
 
   useEffect(() => {
-    if (token) {
-      getManufactureData();
+    if (isSuccess) {
+      setManufactures(data);
     }
-  }, [token]);
+  }, [data, isSuccess]);
 
-  if (!token) {
-    return (
-      <Row className="mt-4">
-        <Col>
-          <h1 className="text-center">
-            Please login first to get Manufacture data!
-          </h1>
-        </Col>
-      </Row>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Row
-        className="mt-4 d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh" }}
-      >
-        <MoonLoader color="#1306ff" />
-      </Row>
-    );
-  }
+  // if (!token) {
+  //   return (
+  //     <Row className="mt-4">
+  //       <Col>
+  //         <h1 className="text-center">
+  //           Please login first to get Manufacture data!
+  //         </h1>
+  //       </Col>
+  //     </Row>
+  //   );
+  // }
 
   const onDelete = async (event, id) => {
     event.preventDefault();
@@ -79,14 +76,7 @@ const ScreenManufactures = () => {
         {
           label: "Yes",
           onClick: async () => {
-            const result = await deleteManufacture(id);
-            if (result?.success) {
-              toast.success("Data deleted successfully");
-              getManufactureData();
-              return;
-            }
-
-            toast.error(result?.message);
+            deleting(id);
           },
         },
         {
@@ -112,15 +102,20 @@ const ScreenManufactures = () => {
 
       <Row className="mt-3">
         <Col>
-          <CreateManufacture
-            onManufactureCreated={getManufactureData}
-            id={id}
-            setId={setId}
-          />
+          <CreateManufacture id={id} setId={setId} />
         </Col>
         <Col xs={6}>
+          {isLoading ||
+            (isDeleteProcessing && (
+              <Row
+                className="mt-4 d-flex justify-content-center align-items-center"
+                style={{ minHeight: "100vh" }}
+              >
+                <MoonLoader color="#1306ff" />
+              </Row>
+            ))}
           <ListGroup as="ul">
-            {manufactures.length === 0 ? (
+            {manufactures.length == 0 ? (
               <h1>Manufactures not found!</h1>
             ) : (
               manufactures.map((manufacture, index) => (
@@ -180,65 +175,60 @@ const ScreenManufactures = () => {
   );
 };
 
-function CreateManufacture({ onManufactureCreated, id, setId }) {
+function CreateManufacture({ id, setId }) {
   const [manufactureName, setManufactureName] = useState("");
   const [manufactureRegion, setManufactureRegion] = useState("");
   const [year, setYear] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  // const [onProses, setOnProses] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { mutate: manufactures, isPending: onProses } = useMutation({
+    mutationFn: (body) => {
+      return !id ? createManufacture(body) : updateManufacture(id, body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["manufactures"]);
+      setManufactureName("");
+      setManufactureRegion("");
+      setYear("");
+      setId(null);
+      toast.success("Data berhasil disimpan.");
+    },
+    onError: (err) => {
+      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
+    },
+  });
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true); // Set loading to true when the form is being submitted
-
     const request = {
       manufactureName,
       manufactureRegion,
       year,
     };
 
-    const result = id
-      ? await updateManufacture(id, request)
-      : await createManufacture(request);
-
-    setIsLoading(false); // Set loading to false after the request is complete
-
-    if (result?.success) {
-      toast.success("Data created successfully");
-      onManufactureCreated();
-      setManufactureName("");
-      setManufactureRegion("");
-      setYear("");
-      setId(null);
-      return;
-    } else {
-      alert(result?.message);
-    }
-
-    toast.error(result?.message);
+    manufactures(request);
   };
 
-  useEffect(() => {
-    const fetchManufactureDetail = async () => {
-      if (id) {
-        setIsLoading(true); // Set loading to true when fetching data
-        const result = await getDetailManufacture(id);
-        setIsLoading(false); // Set loading to false after fetching is done
-        if (result?.success) {
-          setManufactureName(result.data.manufacture_name);
-          setManufactureRegion(result.data.manufacture_region);
-          setYear(result.data.year_establish);
-        }
-      }
-    };
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["manufactures", id],
+    queryFn: () => getDetailManufacture(id),
+    enabled: !!id,
+  });
 
-    fetchManufactureDetail();
-  }, [id]);
+  useEffect(() => {
+    if (isSuccess) {
+      setManufactureName(data?.manufacture_name);
+      setManufactureRegion(data?.manufacture_region);
+      setYear(data?.year_establish);
+    }
+  }, [isSuccess, data, isError]);
 
   return (
     <Card>
       <Card.Header className="text-center">Create Manufacture</Card.Header>
       <Card.Body>
-        {isLoading ? (
+        {isLoading || onProses ? (
           <div className="d-flex justify-content-center align-items-center">
             <MoonLoader color="#1306ff" />
           </div>
@@ -291,14 +281,12 @@ function CreateManufacture({ onManufactureCreated, id, setId }) {
               </Col>
             </Form.Group>
             <div className="d-grid gap-2">
-              <Button type="submit" variant="primary" disabled={isLoading}>
-                {isLoading
-                  ? id
-                    ? "Updating..."
-                    : "Creating..."
-                  : id
-                    ? "Update Manufacture"
-                    : "Create Manufacture"}
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={onProses || isLoading}
+              >
+                {id ? "Update Manufacture" : "Create Manufacture"}
               </Button>
             </div>
           </Form>

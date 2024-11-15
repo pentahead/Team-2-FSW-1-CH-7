@@ -20,50 +20,38 @@ import {
   getDetailType,
 } from "../../service/type"; // ganti dengan service yang sesuai
 import { confirmAlert } from "react-confirm-alert";
-
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 const ScreenTypes = () => {
   const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
 
   const [types, setTypes] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [id, setId] = useState(null);
+  const queryClient = useQueryClient();
 
-  const getTypeData = async () => {
-    setIsLoading(true);
-    const result = await getType(); // ganti dengan API yang sesuai
-    if (result.success) {
-      setTypes(result.data);
-    }
-    setIsLoading(false);
-  };
+  const { data, isSuccess, isLoading } = useQuery({
+    queryKey: ["types"],
+    queryFn: () => getType(),
+    enabled: !!token,
+    refetchOnWindowFocus: true,
+  });
+
+  const { mutate: deleting, isPending: isDeleteProcessing } = useMutation({
+    queryKey: ["types", id],
+    mutationFn: (id) => deleteType(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["manufactures"]);
+      toast.success("Data deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error?.message);
+    },
+  });
 
   useEffect(() => {
-    if (token) {
-      getTypeData();
+    if (isSuccess) {
+      setTypes(data);
     }
-  }, [token]);
-
-  if (!token) {
-    return (
-      <Row className="mt-4">
-        <Col>
-          <h1 className="text-center">Please login first to get Type data!</h1>
-        </Col>
-      </Row>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Row
-        className="mt-4 d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh" }}
-      >
-        <MoonLoader color="#1306ff" />
-      </Row>
-    );
-  }
+  }, [isSuccess, data]);
 
   const onDelete = async (event, id) => {
     event.preventDefault();
@@ -75,14 +63,7 @@ const ScreenTypes = () => {
         {
           label: "Yes",
           onClick: async () => {
-            const result = await deleteType(id); // ganti dengan API yang sesuai
-            if (result?.success) {
-              toast.success("Data deleted successfully");
-              getTypeData();
-              return;
-            }
-
-            toast.error(result?.message);
+            deleting(id);
           },
         },
         {
@@ -108,9 +89,18 @@ const ScreenTypes = () => {
 
       <Row className="mt-3">
         <Col>
-          <CreateType onTypeCreated={getTypeData} id={id} setId={setId} />
+          <CreateType id={id} setId={setId} />
         </Col>
         <Col xs={6}>
+          {isLoading ||
+            (isDeleteProcessing && (
+              <Row
+                className="mt-4 d-flex justify-content-center align-items-center"
+                style={{ minHeight: "100vh" }}
+              >
+                <MoonLoader color="#1306ff" />
+              </Row>
+            ))}
           <ListGroup as="ul">
             {types.length === 0 ? (
               <h1>Types not found!</h1>
@@ -160,57 +150,52 @@ const ScreenTypes = () => {
   );
 };
 
-function CreateType({ onTypeCreated, id, setId }) {
-  const [typeName, setTypeName] = useState(""); // Ganti dengan field yang sesuai
-  const [isLoading, setIsLoading] = useState(false);
+function CreateType({ id, setId }) {
+  const [typeName, setTypeName] = useState("");
+
+  const queryClient = useQueryClient();
+
+  const { mutate: types, isPending: onProses } = useMutation({
+    mutationFn: (body) => {
+      return !id ? createType(body) : updateType(id, body);
+    },
+    onSuccess: () => {
+      setTypeName(""); // Reset field
+      setId(null);
+      queryClient.invalidateQueries(["manufactures"]);
+      toast.success("Data berhasil disimpan.");
+    },
+    onError: (err) => {
+      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
+    },
+  });
 
   const onSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true);
-
     const request = {
-      typeName, // Ganti dengan field yang sesuai
+      typeName,
     };
 
-    const result = id
-      ? await updateType(id, request) // ganti dengan API yang sesuai
-      : await createType(request); // ganti dengan API yang sesuai
-
-    setIsLoading(false);
-
-    if (result?.success) {
-      toast.success("Data created successfully");
-      onTypeCreated();
-      setTypeName(""); // Reset field
-      setId(null);
-      return;
-    } else {
-      alert(result?.message);
-    }
-
-    toast.error(result?.message);
+    types(request);
   };
 
-  useEffect(() => {
-    const fetchTypeDetail = async () => {
-      if (id) {
-        setIsLoading(true);
-        const result = await getDetailType(id); // ganti dengan API yang sesuai
-        setIsLoading(false);
-        if (result?.success) {
-          setTypeName(result.data.type_name); // Ganti dengan field yang sesuai
-        }
-      }
-    };
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["manufactures", id],
+    queryFn: () => getDetailType(id),
+    enabled: !!id,
+  });
 
-    fetchTypeDetail();
-  }, [id]);
+  useEffect(() => {
+    if (isSuccess) {
+      setTypeName(data.type_name);
+    }
+  }, [isSuccess, data, isError]);
 
   return (
     <Card>
       <Card.Header className="text-center">Create Type</Card.Header>
       <Card.Body>
-        {isLoading ? (
+        {isLoading || onProses ? (
           <div className="d-flex justify-content-center align-items-center">
             <MoonLoader color="#1306ff" />
           </div>
