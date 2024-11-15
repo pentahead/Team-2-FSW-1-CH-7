@@ -20,51 +20,40 @@ import {
   getDetailAvailable,
   getAvailables,
 } from "../../service/availables";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ScreenAvailables = () => {
   const { token } = useSelector((state) => state.auth);
 
   const [availables, setAvailables] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [id, setId] = useState(null);
 
-  const getAvailableData = async () => {
-    setIsLoading(true);
-    const result = await getAvailables(); // Ganti dengan API yang sesuai
-    if (result.success) {
-      setAvailables(result.data);
-    }
-    setIsLoading(false);
-  };
+  const queryClient = useQueryClient();
+
+  const { data, isSuccess, isLoading } = useQuery({
+    queryKey: ["available"],
+    queryFn: () => getAvailables(),
+    enabled: !!token,
+    refetchOnWindowFocus: true,
+  });
+
+  const { mutate: deleting, isPending: isDeleteProcessing } = useMutation({
+    queryKey: ["available", id],
+    mutationFn: (id) => deleteAvailable(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["available"]);
+      toast.success("Data deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error?.message);
+    },
+  });
 
   useEffect(() => {
-    if (token) {
-      getAvailableData();
+    if (isSuccess) {
+      setAvailables(data);
     }
-  }, [token]);
-
-  if (!token) {
-    return (
-      <Row className="mt-4">
-        <Col>
-          <h1 className="text-center">
-            Please login first to get Available data!
-          </h1>
-        </Col>
-      </Row>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Row
-        className="mt-4 d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh" }}
-      >
-        <MoonLoader color="#1306ff" />
-      </Row>
-    );
-  }
+  }, [isSuccess, data]);
 
   const onDelete = async (event, id) => {
     event.preventDefault();
@@ -76,14 +65,7 @@ const ScreenAvailables = () => {
         {
           label: "Yes",
           onClick: async () => {
-            const result = await deleteAvailable(id); // Ganti dengan API yang sesuai
-            if (result?.success) {
-              toast.success("Data deleted successfully");
-              getAvailableData();
-              return;
-            }
-
-            toast.error(result?.message);
+            deleting(id);
           },
         },
         {
@@ -109,13 +91,18 @@ const ScreenAvailables = () => {
 
       <Row className="mt-3">
         <Col>
-          <CreateAvailable
-            id={id}
-            setId={setId}
-            onAvailableCreated={getAvailableData}
-          />
+          <CreateAvailable id={id} setId={setId} />
         </Col>
         <Col xs={6}>
+          {isLoading ||
+            (isDeleteProcessing && (
+              <Row
+                className="mt-4 d-flex justify-content-center align-items-center"
+                style={{ minHeight: "100vh" }}
+              >
+                <MoonLoader color="#1306ff" />
+              </Row>
+            ))}
           <ListGroup as="ul">
             {availables.length === 0 ? (
               <h1>Availables not found!</h1>
@@ -165,56 +152,52 @@ const ScreenAvailables = () => {
   );
 };
 
-function CreateAvailable({ onAvailableCreated, id, setId }) {
+function CreateAvailable({  id, setId }) {
   const [availableStatus, setAvailableStatus] = useState(""); // Ganti dengan field yang sesuai
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchAvailableDetail = async () => {
-      if (id) {
-        setIsLoading(true);
-        const result = await getDetailAvailable(id); // ganti dengan API yang sesuai
-        setIsLoading(false);
-        if (result?.success) {
-          setAvailableStatus(result.data.available_status); // Ganti dengan field yang sesuai
-        }
-      }
-    };
+  const queryClient = useQueryClient();
 
-    fetchAvailableDetail();
-  }, [id]);
+  const { mutate: available, isPending: onProses } = useMutation({
+    mutationFn: (body) => {
+      return !id ? createAvailable(body) : updateAvailable(id, body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["available"]);
+      setId(null);
+      setAvailableStatus(""); // Reset field
+      toast.success("Data berhasil disimpan.");
+    },
+    onError: (err) => {
+      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
+    },
+  });
+
   const onSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true);
-
     const request = {
-      availableStatus, // Ganti dengan field yang sesuai
+      availableStatus,
     };
 
-    const result = id
-      ? await updateAvailable(id, request) // ganti dengan API yang sesuai
-      : await createAvailable(request); // ganti dengan API yang sesuai
-
-    setIsLoading(false);
-
-    if (result?.success) {
-      toast.success("Data created successfully");
-      setAvailableStatus(""); // Reset field
-      onAvailableCreated();
-      setId(null);
-      return;
-    } else {
-      alert(result?.message);
-    }
-
-    toast.error(result?.message);
+    available(request);
   };
+
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["available", id],
+    queryFn: () => getDetailAvailable(id),
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (isSuccess) {
+      setAvailableStatus(data.type_name);
+    }
+  }, [isSuccess, data, isError]);
 
   return (
     <Card>
       <Card.Header className="text-center">Create Available</Card.Header>
       <Card.Body>
-        {isLoading ? (
+        {isLoading || onProses ? (
           <div className="d-flex justify-content-center align-items-center">
             <MoonLoader color="#1306ff" />
           </div>

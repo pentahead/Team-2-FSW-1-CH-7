@@ -5,7 +5,6 @@ import {
   Col,
   Nav,
   Dropdown,
-  Collapse,
   Image,
   Navbar,
 } from "react-bootstrap";
@@ -15,7 +14,7 @@ import ButtonGroup from "react-bootstrap/ButtonGroup";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { setToken, setUser } from "../../redux/slices/auth";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { profile } from "../../service/auth";
 import { useQuery } from "@tanstack/react-query";
 

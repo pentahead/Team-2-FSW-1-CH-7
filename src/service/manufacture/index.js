@@ -17,7 +17,7 @@ export const getManufacture = async (manufactureName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const getDetailManufacture = async (id) => {
@@ -34,7 +34,7 @@ export const getDetailManufacture = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 export const createManufacture = async (request) => {
   const token = localStorage.getItem("token");

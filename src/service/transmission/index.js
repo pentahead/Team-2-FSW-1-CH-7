@@ -17,7 +17,7 @@ export const getTransmission = async (transmissionName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const getDetailTransmission = async (id) => {
@@ -34,7 +34,7 @@ export const getDetailTransmission = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const createTransmission = async (request) => {
@@ -56,7 +56,7 @@ export const createTransmission = async (request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const updateTransmission = async (id, request) => {
@@ -78,7 +78,7 @@ export const updateTransmission = async (id, request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const deleteTransmission = async (id) => {
@@ -95,5 +95,5 @@ export const deleteTransmission = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };

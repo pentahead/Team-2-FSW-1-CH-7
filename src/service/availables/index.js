@@ -16,7 +16,7 @@ export const getAvailables = async (availableName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const getDetailAvailable = async (id) => {
@@ -33,7 +33,7 @@ export const getDetailAvailable = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const createAvailable = async (request) => {
@@ -52,7 +52,7 @@ export const createAvailable = async (request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const updateAvailable = async (id, request) => {
@@ -74,7 +74,7 @@ export const updateAvailable = async (id, request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const deleteAvailable = async (id) => {
@@ -91,5 +91,5 @@ export const deleteAvailable = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
