@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import { createCar, getDetailCar, updateCar } from "../../service/cars";
 import { getModels } from "../../service/models";
 import { getAvailables } from "../../service/availables";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
-const FormComponent = ({ setOpenForm, id, setId, getCarData }) => {
+const FormComponent = ({ setOpenForm, id, setId }) => {
   const [plate, setPlate] = useState("");
   const [rentPerDay, setRentPerDay] = useState("");
   const [description, setDescription] = useState("");
@@ -14,50 +16,89 @@ const FormComponent = ({ setOpenForm, id, setId, getCarData }) => {
   const [image, setImage] = useState(null);
   const [modelId, setModelId] = useState(0);
   const [currentProfilePicture, setCurrentProfilePicture] = useState(null);
-  const [models, setModels] = useState([]);
-  const [availableStatuses, setAvailableStatuses] = useState([]);
-  const isEditMode = !!id;
+  const queryClient = useQueryClient();
+
+  const { data: models = [] } = useQuery({
+    queryKey: ["models"],
+    queryFn: async () => {
+      const result = await getModels();
+      return result?.data || [];
+    },
+  });
+
+  const { data: availableStatuses = [] } = useQuery({
+    queryKey: ["availables"],
+    queryFn: async () => {
+      const result = await getAvailables();
+      return result?.data || [];
+    },
+  });
+
+  const { data: carDetail } = useQuery({
+    queryKey: ["carDetail", id],
+    queryFn: async () => {
+      const result = await getDetailCar(id);
+      return result;
+    },
+    enabled: !!id,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data) => {
+      return id ? updateCar(id, data) : createCar(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["car"]);
+      queryClient.invalidateQueries(["carDetail"]);
+      setId(null);
+      setOpenForm(false);
+      toast.success("Data berhasil disimpan");
+    },
+    onError: (error) => {
+      toast.error(`Terjadi kesalahan: ${error?.message || "Unknown error"}`);
+    },
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      // Mengambil model dan status
-      const modelResult = await getModels();
-      if (modelResult?.success) setModels(modelResult.data);
-
-      const statusResult = await getAvailables();
-      if (statusResult?.success) setAvailableStatuses(statusResult.data);
-
-      // Jika mode edit aktif, ambil detail data mobil
-      if (isEditMode && id) {
-        const result = await getDetailCar(id);
-        if (result?.success) {
-          setPlate(result.data.plate);
-          setRentPerDay(result.data.rentPerDay);
-          setDescription(result.data.description);
-          setAvailableAt(result.data.availableAt);
-          setYear(result.data.year);
-          setModelId(result.data.model_id);
-          setAvailableStatus(result.data.availability_id);
-          setImage(result.data.image);
-          setCurrentProfilePicture(result.data.image);
-        }
-      }
-    };
-
-    fetchData();
-  }, [id, isEditMode]);
-  console.log(availableStatus);
+    if (carDetail) {
+      setPlate(carDetail?.plate || "");
+      setRentPerDay(carDetail?.rentPerDay || "");
+      setDescription(carDetail?.description || "");
+      setAvailableAt(carDetail?.availableAt || "");
+      setYear(carDetail?.year || "");
+      setModelId(carDetail?.model_id || "");
+      setAvailableStatus(carDetail?.availability_id || "");
+      setImage(carDetail?.image || null);
+      setCurrentProfilePicture(carDetail?.image || null);
+    }
+  }, [carDetail]);
 
   const onSubmit = async (event) => {
-    console.log("Form submitted!");
     event.preventDefault();
 
     const rentPerDayNum = parseInt(rentPerDay, 10);
     const yearNum = parseInt(year, 10);
     const modelIdNum = parseInt(modelId, 10);
 
-    if (isNaN(rentPerDayNum) || isNaN(yearNum) || isNaN(modelIdNum)) {
-      alert("Please provide valid numbers for rentPerDay, year, and modelId.");
+    if (!plate.trim()) {
+      toast.error("Nomor plat tidak boleh kosong");
+      return;
+    }
+
+    if (isNaN(rentPerDayNum) || rentPerDayNum <= 0) {
+      toast.error("Harga sewa per hari harus berupa angka positif");
+      return;
+    }
+    if (isNaN(modelIdNum) || modelIdNum <= 0) {
+      toast.error("Silakan pilih model mobil");
+      return;
+    }
+    if (!availableStatus) {
+      toast.error("Silakan pilih status ketersediaan");
+      return;
+    }
+    if (!availableAt) {
+      toast.error("Silakan pilih tanggal ketersediaan");
       return;
     }
 
@@ -72,17 +113,7 @@ const FormComponent = ({ setOpenForm, id, setId, getCarData }) => {
       image,
     };
 
-    const result = isEditMode
-      ? await updateCar(id, request)
-      : await createCar(request);
-
-    if (result?.success) {
-      setOpenForm(false);
-      setId(null);
-      getCarData();
-    } else {
-      alert(result?.message);
-    }
+    mutation.mutate(request);
   };
 
   return (
@@ -138,7 +169,7 @@ const FormComponent = ({ setOpenForm, id, setId, getCarData }) => {
                           onChange={(e) => {
                             setImage(e.target.files[0]);
                             setCurrentProfilePicture(
-                              URL.createObjectURL(event.target.files[0])
+                              URL.createObjectURL(e.target.files[0])
                             );
                           }}
                           className="d-none"

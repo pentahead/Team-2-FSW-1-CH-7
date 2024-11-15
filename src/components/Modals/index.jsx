@@ -11,9 +11,11 @@ import { toast } from "react-toastify";
 import { confirmAlert } from "react-confirm-alert";
 import { MoonLoader } from "react-spinners";
 import { useSelector } from "react-redux";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const MyVerticallyCenteredModal = (props) => {
   const { id, setOpenForm, getCarData, setId } = props;
+
   return (
     <Modal
       {...props}
@@ -34,44 +36,52 @@ const MyVerticallyCenteredModal = (props) => {
         />
       </Modal.Body>
       <Modal.Footer>
-        <Button onClick={props.onHide}>Close</Button>
+        <Button
+          onClick={() => {
+            props.onHide();
+            setId(null);
+          }}
+        >
+          Close
+        </Button>
       </Modal.Footer>
     </Modal>
   );
 };
-
 function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
   const navigate = useNavigate();
-
-  const [car, setCar] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isNotFound, setIsNotFound] = useState(false);
   const { token } = useSelector((state) => state.auth);
-  const location = useLocation(); // mendapatkan lokasi saat ini
+  const location = useLocation();
 
-  useEffect(() => {
-    const getDetailCarData = async (id) => {
-      setIsLoading(true);
+  const queryClient = useQueryClient();
+
+  const { data: carData, isLoading } = useQuery({
+    queryKey: ["carDetail", id],
+    queryFn: async () => {
       const result = await getDetailCar(id);
-      if (result?.success) {
-        setCar(result.data);
-        setIsNotFound(false);
-      } else {
-        setIsNotFound(true);
-      }
-      setIsLoading(false);
-    };
-
-    if (id) {
-      getDetailCarData(id);
-    }
-  }, [id]);
+      return result;
+    },
+    enabled: !!id && !!token,
+  });
+  const { mutate: deleting, isPending: isDeleteProcessing } = useMutation({
+    queryKey: ["carDetail", id],
+    mutationFn: (id) => deleteCar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["carDetail"]);
+      toast.success("Data deleted successfully");
+      setId(null);
+    },
+    onError: (error) => {
+      toast.error(error?.message);
+    },
+  });
 
   if (isLoading) {
     return (
       <Row
         className="mt-4 d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh" }} // Agar menempati seluruh tinggi viewport
+        style={{ minHeight: "100vh" }}
       >
         <MoonLoader color="#1306ff" />
       </Row>
@@ -99,22 +109,12 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
         {
           label: "Yes",
           onClick: async () => {
-            const result = await deleteCar(id);
-            if (result?.success) {
-              // navigate({ to: "/dashboard" });
-              setId(null);
-              getCarData();
-              return;
-            }
-
-            toast.error(result?.message);
+            deleting(id);
           },
         },
         {
           label: "No",
-          onClick: () => {
-            setId(null);
-          },
+          onClick: () => {},
         },
       ],
     });
@@ -127,13 +127,13 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
           <Card.Subtitle className="mb-2 text-muted">
             <Card.Img
               variant="top"
-              src={car?.image}
-              alt={car?.Models?.model_name}
+              src={carData?.image}
+              alt={carData?.Models?.model_name}
             />
           </Card.Subtitle>
           <Card.Title>
-            {car?.Models?.model_name} -{" "}
-            {car?.Models?.Manufacture?.manufacture_name}
+            {carData?.Models?.model_name} -{" "}
+            {carData?.Models?.Manufacture?.manufacture_name}
           </Card.Title>
 
           <dl className="row">
@@ -143,7 +143,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
               </Col>
               <Col sm={9}>
                 <dd className="text-muted">
-                  {car?.Models?.Transmission?.transmission_name}
+                  {carData?.Models?.Transmission?.transmission_name}
                 </dd>
               </Col>
             </Row>
@@ -154,7 +154,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
               <Col sm={9}>
                 <dd className="text-muted">
                   {" "}
-                  {car?.Models?.capacity || "Not specified"}
+                  {carData?.Models?.capacity || "Not specified"}
                 </dd>
               </Col>
             </Row>
@@ -163,7 +163,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
                 <dt className="font-weight-semibold">Plate</dt>
               </Col>
               <Col sm={9}>
-                <dd className="text-muted"> {car?.plate}</dd>
+                <dd className="text-muted"> {carData?.plate}</dd>
               </Col>
             </Row>
             <Row className="mb-3">
@@ -171,7 +171,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
                 <dt className="font-weight-semibold">Rent per Day</dt>
               </Col>
               <Col sm={9}>
-                <dd className="text-muted"> Rp {car?.rentPerDay}</dd>
+                <dd className="text-muted"> Rp {carData?.rentPerDay}</dd>
               </Col>
             </Row>
             <Row className="mb-3">
@@ -179,7 +179,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
                 <dt className="font-weight-semibold">Year</dt>
               </Col>
               <Col sm={9}>
-                <dd className="text-muted">{car?.year}</dd>
+                <dd className="text-muted">{carData?.year}</dd>
               </Col>
             </Row>
             <Row className="mb-3">
@@ -188,7 +188,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
               </Col>
               <Col sm={9}>
                 <dd className="text-muted">
-                  {new Date(car?.availableAt).toLocaleDateString()}
+                  {new Date(carData?.availableAt).toLocaleDateString()}
                 </dd>
               </Col>
             </Row>
@@ -197,7 +197,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
                 <dt className="font-weight-semibold">Description</dt>
               </Col>
               <Col sm={9}>
-                <dd className="text-muted">{car?.description}</dd>
+                <dd className="text-muted">{carData?.description}</dd>
               </Col>
             </Row>
             <Row className="mb-3">
@@ -206,7 +206,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
               </Col>
               <Col sm={9}>
                 <dd className="text-muted">
-                  {car?.Available?.available_status}
+                  {carData?.Available?.available_status}
                 </dd>
               </Col>
             </Row>
@@ -216,10 +216,10 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
                 <dt className="font-weight-semibold">Options</dt>
               </Col>
               <Col sm={9}>
-                {car?.Models?.modelOptions &&
-                car.Models.modelOptions.length > 0 ? (
+                {carData?.Models?.modelOptions &&
+                carData.Models.modelOptions.length > 0 ? (
                   <ListGroup>
-                    {car.Models.modelOptions.map((option, index) => (
+                    {carData.Models.modelOptions.map((option, index) => (
                       <ListGroup.Item
                         className="d-flex justify-content-between align-items-center"
                         key={index}
@@ -243,9 +243,10 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
                 <dt className="font-weight-semibold">Specifications</dt>
               </Col>
               <Col sm={9}>
-                {car?.Models?.modelSpecs && car.Models.modelSpecs.length > 0 ? (
+                {carData?.Models?.modelSpecs &&
+                carData.Models.modelSpecs.length > 0 ? (
                   <ListGroup>
-                    {car.Models.modelSpecs.map((spec, index) => (
+                    {carData.Models.modelSpecs.map((spec, index) => (
                       <ListGroup.Item
                         className="d-flex justify-content-between align-items-center"
                         key={index}

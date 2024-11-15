@@ -21,30 +21,41 @@ import {
 import { confirmAlert } from "react-confirm-alert";
 import { toast } from "react-toastify";
 import { MoonLoader } from "react-spinners";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const ScreenOptions = () => {
   const { token } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const [options, setOption] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
   const [id, setId] = useState(null);
 
-  const getOptionData = async () => {
-    setIsLoading(true);
-    const result = await getOption();
-    if (result.success) {
-      setOption(result.data);
-    }
-    setIsLoading(false);
-  };
+  const queryClient = useQueryClient();
+
+  const { data, isSuccess, isLoading } = useQuery({
+    queryKey: ["option"],
+    queryFn: () => getOption(),
+    enabled: !!token,
+    refetchOnWindowFocus: true,
+  });
+
+  const { mutate: deleting, isPending: isDeleteProcessing } = useMutation({
+    queryKey: ["option", id],
+    mutationFn: (id) => deleteOption(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["option"]);
+      toast.success("Data deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error?.message);
+    },
+  });
 
   useEffect(() => {
-    if (token) {
-      getOptionData();
+    if (isSuccess) {
+      setOption(data);
     }
-  }, [token]);
+  }, [isSuccess, data]);
 
   if (!token) {
     return (
@@ -79,14 +90,7 @@ const ScreenOptions = () => {
         {
           label: "Yes",
           onClick: async () => {
-            const result = await deleteOption(id);
-            if (result?.success) {
-              toast.success("Data deleted successfully");
-              getOptionData();
-              return;
-            }
-
-            toast.error(result?.message);
+            deleting(id);
           },
         },
         {
@@ -112,9 +116,18 @@ const ScreenOptions = () => {
 
       <Row className="mt-3">
         <Col>
-          <CreateOption onOptionCreated={getOptionData} id={id} setId={setId} />
+          <CreateOption id={id} setId={setId} />
         </Col>
         <Col xs={6}>
+          {isLoading ||
+            (isDeleteProcessing && (
+              <Row
+                className="mt-4 d-flex justify-content-center align-items-center"
+                style={{ minHeight: "100vh" }}
+              >
+                <MoonLoader color="#1306ff" />
+              </Row>
+            ))}
           <ListGroup as="ul">
             {options.length === 0 ? (
               <h1>Options not found!</h1>
@@ -165,57 +178,48 @@ const ScreenOptions = () => {
   );
 };
 
-function CreateOption({ onOptionCreated, id, setId }) {
+function CreateOption({ id, setId }) {
   const [optionName, setOptionName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
+  const queryClient = useQueryClient();
+  const { mutate: option, isPending: onProses } = useMutation({
+    mutationFn: (body) => {
+      return !id ? createOption(body) : updateOption(id, body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["option"]);
+      setId(null);
+      setOptionName("");
+      toast.success("Data berhasil disimpan.");
+    },
+    onError: (err) => {
+      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
+    },
+  });
   const onSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true); // Set loading to true when the form is being submitted
 
     const request = {
       optionName,
     };
 
-    const result = id
-      ? await updateOption(id, request)
-      : await createOption(request);
-
-    setIsLoading(false); // Set loading to false after the request is complete
-
-    if (result?.success) {
-      toast.success("Data created successfully");
-      onOptionCreated();
-      setOptionName("");
-      setId(null);
-      return;
-    } else {
-      alert(result?.message);
-    }
-
-    toast.error(result?.message);
+    option(request);
   };
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["option", id],
+    queryFn: () => getDetailOption(id),
+    enabled: !!id,
+  });
 
   useEffect(() => {
-    const fetchOptionDetail = async () => {
-      if (id) {
-        setIsLoading(true); // Set loading to true when fetching data
-        const result = await getDetailOption(id);
-        setIsLoading(false); // Set loading to false after fetching is done
-        if (result?.success) {
-          setOptionName(result.data.option_name);
-        }
-      }
-    };
-
-    fetchOptionDetail();
-  }, [id]);
-
+    if (isSuccess) {
+      setOptionName(data.option_name); 
+    }
+  }, [isSuccess, data, isError]);
   return (
     <Card>
       <Card.Header className="text-center">Create Option</Card.Header>
       <Card.Body>
-        {isLoading ? (
+        {isLoading || onProses ? (
           <div className="d-flex justify-content-center align-items-center">
             <MoonLoader color="#1306ff" />
           </div>
@@ -244,7 +248,7 @@ function CreateOption({ onOptionCreated, id, setId }) {
                 <Button
                   onClick={() => {
                     setId(null);
-                    onOptionCreated();
+                    setOptionName("");
                   }}
                   // type="submit"
                   variant="danger"

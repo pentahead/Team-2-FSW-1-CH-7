@@ -16,16 +16,18 @@ export const getCars = async (carName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 export const findCars = async (filters) => {
   const token = localStorage.getItem("token");
   const url = new URL(`${import.meta.env.VITE_API_URL}/cars`);
-  Object.keys(filters).forEach(key => url.searchParams.append(key, filters[key]));
+  Object.keys(filters).forEach((key) =>
+    url.searchParams.append(key, filters[key])
+  );
 
   const response = await fetch(url, {
-      headers: { authorization: `Bearer ${token}` },
-      method: "GET",
+    headers: { authorization: `Bearer ${token}` },
+    method: "GET",
   });
 
   return response.json();
@@ -33,7 +35,6 @@ export const findCars = async (filters) => {
 
 export const getDetailCar = async (id) => {
   const token = localStorage.getItem("token");
-
   let url = `${import.meta.env.VITE_API_URL}/cars/${id}`;
 
   const response = await fetch(url, {
@@ -43,9 +44,8 @@ export const getDetailCar = async (id) => {
     method: "GET",
   });
 
-  // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const createCar = async (request) => {
@@ -84,7 +84,7 @@ export const createCar = async (request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const updateCar = async (id, request) => {
@@ -123,7 +123,7 @@ export const updateCar = async (id, request) => {
 
   // Get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const deleteCar = async (id) => {
@@ -140,5 +140,5 @@ export const deleteCar = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };

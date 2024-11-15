@@ -16,7 +16,7 @@ export const getOption = async (optionName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const getDetailOption = async (id) => {
@@ -33,7 +33,7 @@ export const getDetailOption = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const createOption = async (request) => {
@@ -52,7 +52,7 @@ export const createOption = async (request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const updateOption = async (id, request) => {
@@ -61,17 +61,20 @@ export const updateOption = async (id, request) => {
   const formData = new FormData();
   formData.append("option_name", request.optionName);
 
-  const response = await fetch(`${import.meta.env.VITE_API_URL}/options/${id}`, {
-    headers: {
-      authorization: `Bearer ${token}`,
-    },
-    method: "PUT",
-    body: formData,
-  });
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/options/${id}`,
+    {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+      method: "PUT",
+      body: formData,
+    }
+  );
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const deleteOption = async (id) => {
@@ -88,6 +91,5 @@ export const deleteOption = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
-

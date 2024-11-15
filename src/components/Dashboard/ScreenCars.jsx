@@ -6,6 +6,7 @@ import MyVerticallyCenteredModal from "../Modals";
 import { getCars } from "../../service/cars";
 import { MoonLoader } from "react-spinners";
 import FormComponent from "./FormComponent";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // import FormComponent from "./FormComponent";
 
 const ScreenCars = () => {
@@ -13,24 +14,21 @@ const ScreenCars = () => {
   const { token } = useSelector((state) => state.auth);
   const [openForm, setOpenForm] = useState(false);
 
-  const [Cars, setCars] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [cars, setCars] = useState([]);
   const [id, setId] = useState(null);
   const isEditMode = !!id;
+  const { data, isSuccess, isLoading } = useQuery({
+    queryKey: ["car"],
+    queryFn: () => getCars(),
+    enabled: !!token,
+    refetchOnWindowFocus: true,
+  });
 
-  const getCarData = async () => {
-    setIsLoading(true);
-    const result = await getCars();
-    if (result.success) {
-      setCars(result.data);
-    }
-    setIsLoading(false);
-  };
   useEffect(() => {
-    if (token) {
-      getCarData();
+    if (isSuccess) {
+      setCars(data);
     }
-  }, [token]);
+  }, [isSuccess, data]);
 
   if (!token) {
     return (
@@ -94,11 +92,11 @@ const ScreenCars = () => {
 
         <Row className="mt-3">
           {!openForm ? (
-            Cars.length === 0 ? (
+            cars.length === 0 ? (
               <h1>Cars not found!</h1>
             ) : (
               <Row className="mt-3">
-                {Cars.map((car) => (
+                {cars.map((car) => (
                   <Col
                     xs={12}
                     sm={6}
@@ -122,7 +120,7 @@ const ScreenCars = () => {
               setOpenForm={setOpenForm}
               id={id}
               setId={setId}
-              getCarData={getCarData}
+              getCarData={data}
             />
           )}
         </Row>
@@ -131,12 +129,11 @@ const ScreenCars = () => {
       <MyVerticallyCenteredModal
         show={modalShow}
         setOpenForm={setOpenForm}
-        getCarData={getCarData}
+        getCarData={cars}
         id={id}
         setId={setId}
         onHide={() => {
           setModalShow(false);
-          
         }}
       />
     </>
