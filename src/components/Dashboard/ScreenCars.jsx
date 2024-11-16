@@ -106,8 +106,10 @@ const ScreenCars = () => {
                     className="mb-4"
                   >
                     <CarItem
-                      setModalShow={setModalShow}
-                      modalShow={modalShow}
+                      modalConfig={{
+                        setModalShow,
+                        modalShow,
+                      }}
                       setId={setId}
                       car={car}
                     />

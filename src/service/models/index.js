@@ -16,7 +16,7 @@ export const getModels = async (modelName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const getDetailModel = async (id) => {
@@ -61,6 +61,9 @@ export const createModel = async (request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
+  if (!result?.success) {
+    throw new Error(result?.message);
+  }
   return result;
 };
 
@@ -88,6 +91,9 @@ export const updateModel = async (id, request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
+  if (!result?.success) {
+    throw new Error(result?.message);
+  }
   return result;
 };
 

@@ -16,7 +16,7 @@ export const getSpecs = async (specName) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const getDetailSpec = async (id) => {
@@ -33,7 +33,7 @@ export const getDetailSpec = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const createSpec = async (request) => {
@@ -52,7 +52,7 @@ export const createSpec = async (request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const updateSpec = async (id, request) => {
@@ -71,7 +71,7 @@ export const updateSpec = async (id, request) => {
 
   // get the data if fetching succeed!
   const result = await response.json();
-  return result;
+  return result?.data;
 };
 
 export const deleteSpec = async (id) => {
@@ -88,5 +88,5 @@ export const deleteSpec = async (id) => {
 
   // get data
   const result = await response.json();
-  return result;
+  return result?.data;
 };
