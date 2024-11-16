@@ -4,7 +4,7 @@ import Button from "react-bootstrap/Button";
 import PropTypes from "prop-types";
 import { Link } from "@tanstack/react-router";
 
-const CarItem = ({ car, setModalShow, setId }) => {
+const CarItem = ({ modalConfig, setId, car }) => {
   return (
     <Col md={3}>
       <Card style={{ width: "18rem", marginTop: "2rem", height: "35rem" }}>
@@ -14,7 +14,7 @@ const CarItem = ({ car, setModalShow, setId }) => {
           style={{
             width: "100%",
             height: "10rem",
-            objectFit: "cover", // menjaga proporsi gambar
+            objectFit: "cover",
             borderRadius: "8px",
           }}
           src={car?.image}
@@ -53,9 +53,9 @@ const CarItem = ({ car, setModalShow, setId }) => {
           <Button
             style={{ width: "15rem" }}
             as={Link}
-            // to={`/cars/${car?.id}`} // Gunakan `to` untuk navigasi Link
+            // to={/cars/${car?.id}} // Gunakan to untuk navigasi Link
             onClick={() => {
-              setModalShow(true);
+              modalConfig.setModalShow(true);
               setId(car?.id);
             }}
             variant="primary"
@@ -70,47 +70,12 @@ const CarItem = ({ car, setModalShow, setId }) => {
 };
 
 CarItem.propTypes = {
-  setModalShow: PropTypes.object,
-
-  car: PropTypes.shape({
-    id: PropTypes.number,
-    plate: PropTypes.string,
-    rentPerDay: PropTypes.number,
-    description: PropTypes.string,
-    availableAt: PropTypes.string,
-    year: PropTypes.number,
-    image: PropTypes.string,
-    Models: PropTypes.shape({
-      model_name: PropTypes.string,
-      Transmission: PropTypes.shape({
-        transmission_name: PropTypes.string,
-      }),
-      capacity: PropTypes.number,
-      Type: PropTypes.shape({
-        type_name: PropTypes.string,
-      }),
-      Manufacture: PropTypes.shape({
-        manufacture_name: PropTypes.string,
-      }),
-      modelSpecs: PropTypes.arrayOf(
-        PropTypes.shape({
-          Specs: PropTypes.shape({
-            spec_name: PropTypes.string,
-          }),
-        })
-      ),
-      modelOptions: PropTypes.arrayOf(
-        PropTypes.shape({
-          Options: PropTypes.shape({
-            option_name: PropTypes.string,
-          }),
-        })
-      ),
-    }),
-    Available: PropTypes.shape({
-      available_status: PropTypes.string,
-    }),
-  }),
+  modalConfig: PropTypes.shape({
+    setModalShow: PropTypes.func.isRequired,
+    modalShow: PropTypes.bool.isRequired,
+  }).isRequired,
+  setId: PropTypes.func.isRequired,
+  car: PropTypes.object.isRequired,
 };
 
 export default CarItem;

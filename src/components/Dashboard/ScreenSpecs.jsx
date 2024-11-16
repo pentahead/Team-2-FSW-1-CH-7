@@ -21,30 +21,38 @@ import {
 import { confirmAlert } from "react-confirm-alert";
 import { toast } from "react-toastify";
 import { MoonLoader } from "react-spinners";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 const ScreenSpecs = () => {
   const { token } = useSelector((state) => state.auth);
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const [specs, setSpec] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [specs, setSpecs] = useState([]);
   const [id, setId] = useState(null);
 
-  const getSpecData = async () => {
-    setIsLoading(true);
-    const result = await getSpecs();
-    if (result.success) {
-      setSpec(result.data);
-    }
-    setIsLoading(false);
-  };
+  const { data, isSuccess, isError, isLoading } = useQuery({
+    queryKey: ["specs"],
+    queryFn: () => getSpecs(),
+    enabled: !!token,
+  });
+
+  const { mutate: deleting, isPending: isDeleteProcessing } = useMutation({
+    queryKey: ["specs", id],
+    mutationFn: (id) => deleteSpec(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["specs"]);
+      toast.success("Data deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(error?.message);
+    },
+  });
 
   useEffect(() => {
-    if (token) {
-      getSpecData();
+    if (isSuccess) {
+      setSpecs(data);
     }
-  }, [token]);
+  }, [data, isSuccess]);
 
   if (!token) {
     return (
@@ -52,17 +60,6 @@ const ScreenSpecs = () => {
         <Col>
           <h1 className="text-center">Please login first to get Spec data!</h1>
         </Col>
-      </Row>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Row
-        className="mt-4 d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh" }}
-      >
-        <MoonLoader color="#1306ff" />
       </Row>
     );
   }
@@ -77,14 +74,7 @@ const ScreenSpecs = () => {
         {
           label: "Yes",
           onClick: async () => {
-            const result = await deleteSpec(id);
-            if (result?.success) {
-              toast.success("Data deleted successfully");
-              getSpecData();
-              return;
-            }
-
-            toast.error(result?.message);
+            deleting(id);
           },
         },
         {
@@ -110,14 +100,23 @@ const ScreenSpecs = () => {
 
       <Row className="mt-3">
         <Col>
-          <CreateSpec onSpecCreated={getSpecData} id={id} setId={setId} />
+          <CreateSpec id={id} setId={setId} />
         </Col>
         <Col xs={6}>
+          {isLoading ||
+            (isDeleteProcessing && (
+              <Row
+                className="mt-4 d-flex justify-content-center align-items-center"
+                style={{ minHeight: "100vh" }}
+              >
+                <MoonLoader color="#1306ff" />
+              </Row>
+            ))}
           <ListGroup as="ul">
             {specs.length === 0 ? (
               <h1>Specs not found!</h1>
             ) : (
-              specs.map((specs, index) => (
+              specs.map((Specs, index) => (
                 <ListGroup.Item
                   as="li"
                   key={index}
@@ -128,7 +127,7 @@ const ScreenSpecs = () => {
                       <span>{index + 1}</span>
                     </Col>
                     <Col>
-                      <h6 className="mb-0 text-dark"> {specs?.spec_name}</h6>
+                      <h6 className="mb-0 text-dark"> {Specs?.spec_name}</h6>
                     </Col>
                     <Col>
                       <div className="d-flex justify-content-center gap-3">
@@ -136,12 +135,12 @@ const ScreenSpecs = () => {
                           as={Link}
                           variant="primary"
                           size="md"
-                          onClick={() => setId(specs.id)}
+                          onClick={() => setId(Specs.id)}
                         >
                           Edit
                         </Button>
                         <Button
-                          onClick={(event) => onDelete(event, specs.id)}
+                          onClick={(event) => onDelete(event, Specs.id)}
                           variant="danger"
                           size="md"
                         >
@@ -160,57 +159,48 @@ const ScreenSpecs = () => {
   );
 };
 
-function CreateSpec({ onSpecCreated, id, setId }) {
+function CreateSpec({ id, setId }) {
   const [specName, setSpecName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
-    setIsLoading(true); // Set loading to true when the form is being submitted
-
-    const request = {
-      specName,
-    };
-
-    const result = id
-      ? await updateSpec(id, request)
-      : await createSpec(request);
-
-    setIsLoading(false); // Set loading to false after the request is complete
-
-    if (result?.success) {
-      toast.success("Data created successfully");
-      onSpecCreated();
+  const { mutate: specs, isPending: onProses } = useMutation({
+    mutationFn: (body) => (!id ? createSpec(body) : updateSpec(id, body)),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["specs"]);
       setSpecName("");
       setId(null);
-      return;
-    } else {
-      alert(result?.message);
-    }
+      toast.success("Data berhasil disimpan.");
+    },
+    onError: (err) => {
+      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
+    },
+  });
 
-    toast.error(result?.message);
-  };
+  const { data, isSuccess, isLoading, isError } = useQuery({
+    queryKey: ["specs", id],
+    queryFn: () => getDetailSpec(id),
+    enabled: !!id,
+  });
 
   useEffect(() => {
-    const fetchSpecDetail = async () => {
-      if (id) {
-        setIsLoading(true); // Set loading to true when fetching data
-        const result = await getDetailSpec(id);
-        setIsLoading(false); // Set loading to false after fetching is done
-        if (result?.success) {
-          setSpecName(result.data.spec_name);
-        }
-      }
-    };
+    if ((isSuccess, data)) {
+      setSpecName(data?.spec_name);
+    }
+  }, [isSuccess, data]);
 
-    fetchSpecDetail();
-  }, [id]);
+  const onSubmit = (event) => {
+    event.preventDefault();
+    const request = { specName };
+    specs(request);
+  };
 
   return (
     <Card>
-      <Card.Header className="text-center">Create Spec</Card.Header>
+      <Card.Header className="text-center">
+        {id ? "Edit Spec" : "Create Spec"}
+      </Card.Header>
       <Card.Body>
-        {isLoading ? (
+        {isLoading || onProses ? (
           <div className="d-flex justify-content-center align-items-center">
             <MoonLoader color="#1306ff" />
           </div>
@@ -231,22 +221,14 @@ function CreateSpec({ onSpecCreated, id, setId }) {
               </Col>
             </Form.Group>
 
-            <div className="d-grid d-flex flex-row justify-content-end gap-2">
-              <Button type="submit" variant="primary" disabled={isLoading}>
-                {isLoading ? "Update Specs" : "Create Specs"}
+            <div className="d-grid gap-2">
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={onProses || isLoading}
+              >
+                {id ? "Update Spec" : "Create Spec"}
               </Button>
-              {id && (
-                <Button
-                  onClick={() => {
-                    setId(null);
-                    onSpecCreated();
-                  }}
-                  // type="submit"
-                  variant="danger"
-                >
-                  Cancel
-                </Button>
-              )}
             </div>
           </Form>
         )}
