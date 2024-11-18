@@ -56,14 +56,17 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
 
   const queryClient = useQueryClient();
 
-  const { data: carData, isLoading } = useQuery({
+  const {
+    data: carData,
+    isLoading,
+    isSuccess,
+  } = useQuery({
     queryKey: ["carDetail", id],
-    queryFn: async () => {
-      const result = await getDetailCar(id);
-      return result;
-    },
+    queryFn: () => getDetailCar(id),
+
     enabled: !!id && !!token,
   });
+
   const { mutate: deleting, isPending: isDeleteProcessing } = useMutation({
     queryKey: ["carDetail", id],
     mutationFn: (id) => deleteCar(id),

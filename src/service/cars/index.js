@@ -21,16 +21,19 @@ export const getCars = async (carName) => {
 export const findCars = async (filters) => {
   const token = localStorage.getItem("token");
   const url = new URL(`${import.meta.env.VITE_API_URL}/cars`);
-  Object.keys(filters).forEach((key) =>
-    url.searchParams.append(key, filters[key])
-  );
 
+  Object.keys(filters).forEach((key) => {
+    if (filters[key]) {
+      url.searchParams.append(key, filters[key]);
+    }
+  });
   const response = await fetch(url, {
     headers: { authorization: `Bearer ${token}` },
     method: "GET",
   });
 
-  return response.json();
+  const result = await response.json();
+  return result?.data;
 };
 
 export const getDetailCar = async (id) => {

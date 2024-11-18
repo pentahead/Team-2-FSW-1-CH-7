@@ -52,7 +52,6 @@ const CarItem = ({ modalConfig, setId, car }) => {
 
           <Button
             style={{ width: "15rem" }}
-            as={Link}
             // to={/cars/${car?.id}} // Gunakan to untuk navigasi Link
             onClick={() => {
               modalConfig.setModalShow(true);
