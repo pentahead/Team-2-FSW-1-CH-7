@@ -117,7 +117,7 @@ const ScreenTypes = () => {
                     </Col>
                     <Col>
                       <h6 className="mb-0 text-dark">
-                        {type?.type_name} {/* Ganti dengan field yang sesuai */}
+                        {type?.typeCar} {/* Ganti dengan field yang sesuai */}
                       </h6>
                     </Col>
 

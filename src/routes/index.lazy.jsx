@@ -12,7 +12,7 @@ import {
 } from "react-bootstrap";
 import { useRef } from "react";
 import GuestLayout from "../layouts/GuestLayout";
-
+import { motion } from "motion/react";
 export const Route = createLazyFileRoute("/")({
   component: Index,
 });
@@ -24,24 +24,37 @@ const Hero = () => {
         <Container className="hero">
           <Row className="pt-5 d-flex justify-content-center align-items-center flex-sm-column flex-lg-row">
             <Col lg={6} sm={12} className="text-center text-lg-start">
-              <h1>Sewa & Rental Mobil Terbaik di kawasan Jambi</h1>
-              <p className="col-11 mt-4 mb-3">
-                Selamat datang di Binar Car Rental. Kami menyediakan mobil
-                kualitas terbaik dengan harga terjangkau. Selalu siap melayani
-                kebutuhanmu untuk sewa mobil selama 24 jam.
-              </p>
-              <Button
-                as={Link}
-                to="/findcars"
-                variant="success"
-                className="text-white"
-              >
-                Mulai Sewa Mobil
-              </Button>
+              <Row>
+                <h1>Sewa & Rental Mobil Terbaik di kawasan Jambi</h1>
+                <p className="col-11 mt-4 mb-3">
+                  Selamat datang di Binar Car Rental. Kami menyediakan mobil
+                  kualitas terbaik dengan harga terjangkau. Selalu siap melayani
+                  kebutuhanmu untuk sewa mobil selama 24 jam.
+                </p>
+              </Row>
+              <Row>
+                <Col lg={4}>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      as={Link}
+                      to="/findcars"
+                      variant="success"
+                      className="text-white"
+                    >
+                      Mulai Sewa Mobil
+                    </Button>
+                  </motion.div>
+                </Col>
+              </Row>
             </Col>
 
             <Col lg={6} sm={12} className="d-flex justify-content-end">
-              <img src="img/img_car.png" alt="mobil" className="img-fluid" />
+              <motion.ul animate={{}} initial={{ x: 100 }} >
+                <img src="img/img_car.png" alt="mobil" className="img-fluid" />
+              </motion.ul>
             </Col>
           </Row>
         </Container>
@@ -574,13 +587,18 @@ const CtaBanner = () => {
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
                 eiusmod tempor incididunt ut labore et dolore magna aliqua.
               </p>
-              <Button
-                as={Link}
-                to="/findcars"
-                className="btn btn-success text-white"
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Mulai Sewa Mobil
-              </Button>
+                <motion.button
+                  as={Link}
+                  to="/findcars"
+                  className="btn btn-success text-white"
+                >
+                  Mulai Sewa Mobil
+                </motion.button>
+              </motion.div>
             </Col>
           </Row>
         </Container>

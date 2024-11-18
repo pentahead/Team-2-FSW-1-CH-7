@@ -6,6 +6,10 @@ import { findCars, getCars } from "../service/cars";
 import CarItem from "../components/Car";
 import MyVerticallyCenteredModal from "../components/Modals";
 import { MoonLoader } from "react-spinners";
+import { useQuery } from "@tanstack/react-query";
+import { getAvailables } from "../service/availables";
+import { useSelector } from "react-redux";
+import { getType } from "../service/type";
 
 export const Route = createLazyFileRoute("/findcars")({
   component: FindCars,
@@ -40,11 +44,34 @@ const HeroSection = () => {
 
 const SearchSection = ({ onSearch, isLoading, setIsLoading }) => {
   const [searchParams, setSearchParams] = useState({
-    driver: "",
-    date: "",
-    time: "",
-    count: "",
+    available_status: "",
+    availableAt: "",
+    type_name: "",
+    capacity: "",
   });
+  const [driverStatus, setDriverStatus] = useState([]);
+  const [typeCar, setType] = useState([]);
+  const { token } = useSelector((state) => state.auth);
+  const [isSearchClicked, setIsSearchClicked] = useState(false);
+  const { data: availables, isSuccess } = useQuery({
+    queryKey: ["available"],
+    queryFn: () => getAvailables(),
+    enabled: !!token,
+    refetchOnWindowFocus: true,
+  });
+  const { data: type } = useQuery({
+    queryKey: ["types"],
+    queryFn: () => getType(),
+    enabled: !!token,
+    refetchOnWindowFocus: true,
+  });
+
+  useEffect(() => {
+    if (isSuccess) {
+      setDriverStatus(availables);
+      setType(type);
+    }
+  }, [isSuccess, availables, type]);
 
   const handleInputChange = (e) => {
     setSearchParams({
@@ -53,13 +80,30 @@ const SearchSection = ({ onSearch, isLoading, setIsLoading }) => {
     });
   };
 
+  const { data: resultFind, isSuccess: successFind } = useQuery({
+    queryKey: ["cars", searchParams],
+    queryFn: () => findCars(searchParams),
+
+    enabled: !!isSearchClicked,
+    retry: false,
+  });
+  useEffect(() => {
+    if (successFind) {
+      onSearch(resultFind);
+      setIsLoading(false);
+      setIsSearchClicked(false);
+      setSearchParams({
+        available_status: "",
+        availableAt: "",
+        type_name: "",
+        capacity: "",
+      });
+    }
+  }, [successFind, resultFind, onSearch, setIsLoading]);
+
   const handleSearch = async () => {
     setIsLoading(true);
-    const result = await findCars(searchParams);
-    setIsLoading(false);
-    if (result.success) {
-      onSearch(result.data);
-    }
+    setIsSearchClicked(true);
   };
 
   return (
@@ -68,24 +112,30 @@ const SearchSection = ({ onSearch, isLoading, setIsLoading }) => {
         <div className="container row cari mobil position-absolute top-0 start-50 translate-middle bg-white py-3 flex justify-content-center shadow-lg rounded-4">
           <Col className="text-light text-black">
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="driver">Tipe Driver</Form.Label>
+              <Form.Label htmlFor="available_status">Tipe Driver</Form.Label>
               <Form.Select
-                id="driver"
-                name="driver"
+                id="available_status"
+                name="available_status"
                 onChange={handleInputChange}
               >
                 <option selected>Tipe Driver</option>
-                <option value="true">Dengan Sopir</option>
-                <option value="false">Tanpa Sopir</option>
+                {driverStatus.map((driver, index) => (
+                  <option value={driver?.available_status} key={index}>
+                    {driver?.available_status == "Available"
+                      ? "Dengan Supir"
+                      : driver?.available_status == "Not Available" &&
+                        "Tidak ada Supir"}
+                  </option>
+                ))}
               </Form.Select>
             </Form.Group>
           </Col>
           <Col className="text-light text-black">
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="date">Tanggal</Form.Label>
+              <Form.Label htmlFor="availableAt">Tanggal</Form.Label>
               <Form.Control
-                id="date"
-                name="date"
+                id="availableAt"
+                name="availableAt"
                 type="date"
                 onChange={handleInputChange}
               />
@@ -93,25 +143,30 @@ const SearchSection = ({ onSearch, isLoading, setIsLoading }) => {
           </Col>
           <Col className="text-light text-black">
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="time">Tanggal Penjemputan</Form.Label>
-              <Form.Select id="time" name="time" onChange={handleInputChange}>
-                <option selected>Pilih Waktu</option>
-                <option value="T08:00:00.000Z">08:00 WIB</option>
-                <option value="T09:00:00.000Z">09:00 WIB</option>
-                <option value="T10:00:00.000Z">10:00 WIB</option>
-                <option value="T11:00:00.000Z">11:00 WIB</option>
-                <option value="T12:00:00.000Z">12:00 WIB</option>
+              <Form.Label htmlFor="type_name">Type Mobil</Form.Label>
+              <Form.Select
+                id="type_name"
+                name="type_name"
+                onChange={handleInputChange}
+              >
+                <option selected>Pilih Type Mobil</option>
+
+                {typeCar?.map((type, index) => (
+                  <option value={type?.type_name} key={index}>
+                    {type?.type_name}
+                  </option>
+                ))}
               </Form.Select>
             </Form.Group>
           </Col>
           <Col className="text-light text-black">
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="count">
+              <Form.Label htmlFor="capacity">
                 Jumlah Penumpang (opsional)
               </Form.Label>
               <Form.Control
-                id="count"
-                name="count"
+                id="capacity"
+                name="capacity"
                 type="number"
                 min="0"
                 onChange={handleInputChange}
@@ -159,14 +214,17 @@ const ResultSection = ({ cars, isLoading }) => {
           className="result container d-flex flex-wrap justify-content-center gap-5"
           id="result-card"
         >
-          {cars.length === 0 ? (
+          {console.log(cars)}
+          {!cars || cars?.length === 0 ? (
             <p>Tidak ada mobil yang ditemukan.</p>
           ) : (
             cars.map((car) => (
               <Col xs={12} sm={6} md={4} lg={3} key={car?.id} className="mb-4">
                 <CarItem
-                  setModalShow={setModalShow}
-                  modalShow={modalShow}
+                  modalConfig={{
+                    setModalShow,
+                    modalShow,
+                  }}
                   setId={setId}
                   car={car}
                 />
@@ -175,6 +233,7 @@ const ResultSection = ({ cars, isLoading }) => {
           )}
         </Row>
       </Container>
+
       <MyVerticallyCenteredModal
         show={modalShow}
         setOpenForm={setOpenForm}
