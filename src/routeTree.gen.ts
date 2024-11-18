@@ -21,7 +21,6 @@ const ProfileLazyImport = createFileRoute('/profile')()
 const LoginLazyImport = createFileRoute('/login')()
 const FindcarsLazyImport = createFileRoute('/findcars')()
 const IndexLazyImport = createFileRoute('/')()
-const DashboardIndexLazyImport = createFileRoute('/dashboard/')()
 const AdminDashboardIndexLazyImport = createFileRoute('/admin/dashboard/')()
 
 // Create/Update Routes
@@ -55,14 +54,6 @@ const IndexLazyRoute = IndexLazyImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
-
-const DashboardIndexLazyRoute = DashboardIndexLazyImport.update({
-  id: '/dashboard/',
-  path: '/dashboard/',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() =>
-  import('./routes/dashboard/index.lazy').then((d) => d.Route),
-)
 
 const AdminDashboardIndexLazyRoute = AdminDashboardIndexLazyImport.update({
   id: '/admin/dashboard/',
@@ -111,13 +102,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterLazyImport
       parentRoute: typeof rootRoute
     }
-    '/dashboard/': {
-      id: '/dashboard/'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardIndexLazyImport
-      parentRoute: typeof rootRoute
-    }
     '/admin/dashboard/': {
       id: '/admin/dashboard/'
       path: '/admin/dashboard'
@@ -136,7 +120,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginLazyRoute
   '/profile': typeof ProfileLazyRoute
   '/register': typeof RegisterLazyRoute
-  '/dashboard': typeof DashboardIndexLazyRoute
   '/admin/dashboard': typeof AdminDashboardIndexLazyRoute
 }
 
@@ -146,7 +129,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginLazyRoute
   '/profile': typeof ProfileLazyRoute
   '/register': typeof RegisterLazyRoute
-  '/dashboard': typeof DashboardIndexLazyRoute
   '/admin/dashboard': typeof AdminDashboardIndexLazyRoute
 }
 
@@ -157,7 +139,6 @@ export interface FileRoutesById {
   '/login': typeof LoginLazyRoute
   '/profile': typeof ProfileLazyRoute
   '/register': typeof RegisterLazyRoute
-  '/dashboard/': typeof DashboardIndexLazyRoute
   '/admin/dashboard/': typeof AdminDashboardIndexLazyRoute
 }
 
@@ -169,7 +150,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/profile'
     | '/register'
-    | '/dashboard'
     | '/admin/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -178,7 +158,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/profile'
     | '/register'
-    | '/dashboard'
     | '/admin/dashboard'
   id:
     | '__root__'
@@ -187,7 +166,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/profile'
     | '/register'
-    | '/dashboard/'
     | '/admin/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -198,7 +176,6 @@ export interface RootRouteChildren {
   LoginLazyRoute: typeof LoginLazyRoute
   ProfileLazyRoute: typeof ProfileLazyRoute
   RegisterLazyRoute: typeof RegisterLazyRoute
-  DashboardIndexLazyRoute: typeof DashboardIndexLazyRoute
   AdminDashboardIndexLazyRoute: typeof AdminDashboardIndexLazyRoute
 }
 
@@ -208,7 +185,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginLazyRoute: LoginLazyRoute,
   ProfileLazyRoute: ProfileLazyRoute,
   RegisterLazyRoute: RegisterLazyRoute,
-  DashboardIndexLazyRoute: DashboardIndexLazyRoute,
   AdminDashboardIndexLazyRoute: AdminDashboardIndexLazyRoute,
 }
 
@@ -227,7 +203,6 @@ export const routeTree = rootRoute
         "/login",
         "/profile",
         "/register",
-        "/dashboard/",
         "/admin/dashboard/"
       ]
     },
@@ -245,9 +220,6 @@ export const routeTree = rootRoute
     },
     "/register": {
       "filePath": "register.lazy.jsx"
-    },
-    "/dashboard/": {
-      "filePath": "dashboard/index.lazy.jsx"
     },
     "/admin/dashboard/": {
       "filePath": "admin/dashboard/index.lazy.jsx"

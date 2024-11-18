@@ -1,33 +1,33 @@
-import { createLazyFileRoute } from '@tanstack/react-router'
-import AuthenticatedLayout from '../../../layouts/AuthenticatedLayout'
-import { useState } from 'react'
-import Protected from '../../../components/Auth/Protected'
-import ScreenModels from '../../../components/Dashboard/ScreenModels'
-import ScreenManufactures from '../../../components/Dashboard/ScreenManufactures'
-import ScreenTransmission from '../../../components/Dashboard/ScreenTransmission'
-import ScreenType from '../../../components/Dashboard/ScreenType'
-import ScreenAvailables from '../../../components/Dashboard/ScreenAvailables'
-import ScreenSpecs from '../../../components/Dashboard/ScreenSpecs'
-import ScreenOptions from '../../../components/Dashboard/ScreenOptions'
-import ScreenCars from '../../../components/Dashboard/ScreenCars'
+import { createLazyFileRoute } from "@tanstack/react-router";
+import AuthenticatedLayout from "../../../layouts/AuthenticatedLayout";
+import { useState } from "react";
+import Protected from "../../../components/Auth/Protected";
+import ScreenModels from "../../../components/Dashboard/ScreenModels";
+import ScreenManufactures from "../../../components/Dashboard/ScreenManufactures";
+import ScreenTransmission from "../../../components/Dashboard/ScreenTransmission";
+import ScreenType from "../../../components/Dashboard/ScreenType";
+import ScreenAvailables from "../../../components/Dashboard/ScreenAvailables";
+import ScreenSpecs from "../../../components/Dashboard/ScreenSpecs";
+import ScreenOptions from "../../../components/Dashboard/ScreenOptions";
+import ScreenCars from "../../../components/Dashboard/ScreenCars";
 
-export const Route = createLazyFileRoute('/admin/dashboard/')({
+export const Route = createLazyFileRoute("/admin/dashboard/")({
   component: () => (
     <Protected roles={[1]}>
       <Dashboard />
     </Protected>
   ),
-})
+});
 
-export default function Dashboard() {
-  const [openCars, setOpenCars] = useState(true)
-  const [openTransmission, setOpenTransmission] = useState(false)
-  const [openModel, setOpenModel] = useState(false)
-  const [openManufacture, setOpenManufacture] = useState(false)
-  const [openType, setOpenType] = useState(false)
-  const [openAvailables, setOpenAvailables] = useState(false)
-  const [openSpec, setOpenSpec] = useState(false)
-  const [openOptions, setOpenOptions] = useState(false)
+function Dashboard() {
+  const [openCars, setOpenCars] = useState(true);
+  const [openTransmission, setOpenTransmission] = useState(false);
+  const [openModel, setOpenModel] = useState(false);
+  const [openManufacture, setOpenManufacture] = useState(false);
+  const [openType, setOpenType] = useState(false);
+  const [openAvailables, setOpenAvailables] = useState(false);
+  const [openSpec, setOpenSpec] = useState(false);
+  const [openOptions, setOpenOptions] = useState(false);
 
   return (
     <>
@@ -59,5 +59,5 @@ export default function Dashboard() {
         {openAvailables && <ScreenAvailables />}
       </AuthenticatedLayout>
     </>
-  )
+  );
 }

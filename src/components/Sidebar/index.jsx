@@ -55,15 +55,6 @@ function NavbarLocal() {
           fluid
           className="d-flex flex-row justify-content-end  gap-2  "
         >
-          <Form className="d-flex">
-            <Form.Control
-              type="search"
-              placeholder="Search"
-              className="me-2"
-              aria-label="Search"
-            />
-            <Button variant="outline-success">Search</Button>
-          </Form>
           <Nav>
             <Nav.Link>
               <Image
