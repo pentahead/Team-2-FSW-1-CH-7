@@ -14,6 +14,26 @@ export const login = async (request) => {
   return result?.data;
 };
 
+export const googleLogin = async (accessToken) => {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/auth/google/login`,
+    {
+      body: JSON.stringify({ access_token: accessToken }),
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const result = await response.json();
+  if (!result?.success) {
+    throw new Error(result?.message);
+  }
+
+  return result?.data;
+};
+
 export const register = async (request) => {
   const formData = new FormData();
   formData.append("name", request.name);

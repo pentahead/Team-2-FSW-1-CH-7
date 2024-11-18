@@ -6,10 +6,11 @@ import Form from "react-bootstrap/Form";
 import Row from "react-bootstrap/Row";
 import { useDispatch, useSelector } from "react-redux";
 import { setToken, setUser } from "../redux/slices/auth"; // Import setUser action
-import { login } from "../service/auth";
+import { login, googleLogin } from "../service/auth";
 import { Container } from "react-bootstrap";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useGoogleLogin } from "@react-oauth/google";
 
 export const Route = createLazyFileRoute("/login")({
   component: Login,
@@ -41,15 +42,32 @@ function Login() {
     },
   });
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
+  // Mutation for Google login
+  const { mutate: googleLoginUser } = useMutation({
+    mutationFn: (accessToken) => googleLogin(accessToken),
+    onSuccess: (data) => {
+      dispatch(setToken(data?.token));
+      navigate({ to: "/" });
+    },
+    onError: (err) => {
+      toast.error(err.message || "Google login failed");
+    },
+  });
 
-    const body = {
-      email,
-      password,
-    };
-    loginUser(body);
+  const onSubmit = (event) => {
+    event.preventDefault();
+    loginUser({ email, password });
   };
+
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      googleLoginUser(tokenResponse.access_token);
+    },
+    onError: (err) => {
+      toast.error("Google login error");
+      console.error(err);
+    },
+  });
 
   return (
     <section className="d-flex z-1 bg-light  justify-content-center align-items-center vh-100 bg-login position-relative overflow-hidden">
@@ -99,6 +117,11 @@ function Login() {
               <Button variant="dark" type="submit" className="w-100 mt-3">
                 Login
               </Button>
+              <div className="d-grid gap-2">
+                <Button onClick={handleGoogleLogin} variant="primary">
+                  Login with Google
+                </Button>
+              </div>
             </Form>
           </Col>
           <div className="decoration position-absolute top-50 z-n1 start-100  translate-middle">
