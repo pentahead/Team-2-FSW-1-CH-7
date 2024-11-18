@@ -5,6 +5,7 @@ import { getModels } from "../../service/models";
 import { getAvailables } from "../../service/availables";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 
 const FormComponent = ({ setOpenForm, id, setId }) => {
   const [plate, setPlate] = useState("");
@@ -17,30 +18,24 @@ const FormComponent = ({ setOpenForm, id, setId }) => {
   const [modelId, setModelId] = useState(0);
   const [currentProfilePicture, setCurrentProfilePicture] = useState(null);
   const queryClient = useQueryClient();
+  const { token } = useSelector((state) => state.auth);
 
   const { data: models = [] } = useQuery({
     queryKey: ["models"],
-    queryFn: async () => {
-      const result = await getModels();
-      return result?.data || [];
-    },
+    queryFn: () => getModels(),
+    enabled: !!token,
   });
 
   const { data: availableStatuses = [] } = useQuery({
     queryKey: ["availables"],
-    queryFn: async () => {
-      const result = await getAvailables();
-      return result?.data || [];
-    },
+    queryFn: () => getAvailables(),
+    enabled: !!token,
   });
 
   const { data: carDetail } = useQuery({
     queryKey: ["carDetail", id],
-    queryFn: async () => {
-      const result = await getDetailCar(id);
-      return result;
-    },
-    enabled: !!id,
+    queryFn: () => getDetailCar(id),
+    enabled: !!token,
   });
 
   const mutation = useMutation({

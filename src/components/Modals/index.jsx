@@ -267,7 +267,7 @@ function CarDetail({ id, setOpenForm, onHide, setId, getCarData }) {
             </Row>
 
             {/* Tombol untuk Edit */}
-            {token && location.pathname === "/dashboard" && (
+            {token && location.pathname === "/admin/dashboard" && (
               <>
                 <Card.Text>
                   <div className="d-grid gap-2 mt-2">
