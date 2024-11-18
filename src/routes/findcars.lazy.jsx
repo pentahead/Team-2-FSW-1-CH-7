@@ -10,9 +10,14 @@ import { useQuery } from "@tanstack/react-query";
 import { getAvailables } from "../service/availables";
 import { useSelector } from "react-redux";
 import { getType } from "../service/type";
+import Protected from "../components/Auth/Protected";
 
 export const Route = createLazyFileRoute("/findcars")({
-  component: FindCars,
+  component: () => (
+    <Protected roles={[1, 2]}>
+      <FindCars />
+    </Protected>
+  ),
 });
 
 const HeroSection = () => {
@@ -267,4 +272,5 @@ function FindCars() {
   );
 }
 
-export default FindCars;
+
+
