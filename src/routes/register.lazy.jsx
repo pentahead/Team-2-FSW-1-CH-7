@@ -149,8 +149,8 @@ function Register() {
                 Register
               </Button>
 
-              <div className="d-grid gap-2">
-                <Button onClick={handleGoogleLogin} variant="primary">
+              <div className="d-grid gap-2 mt-3">
+                <Button onClick={handleGoogleLogin} variant="dark">
                   Register with Google
                 </Button>
               </div>

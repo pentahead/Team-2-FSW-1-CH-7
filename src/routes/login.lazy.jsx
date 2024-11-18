@@ -117,8 +117,8 @@ function Login() {
               <Button variant="dark" type="submit" className="w-100 mt-3">
                 Login
               </Button>
-              <div className="d-grid gap-2">
-                <Button onClick={handleGoogleLogin} variant="primary">
+              <div className="d-grid gap-2 mt-3">
+                <Button onClick={handleGoogleLogin} variant="dark">
                   Login with Google
                 </Button>
               </div>
