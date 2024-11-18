@@ -591,13 +591,13 @@ const CtaBanner = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <motion.button
+                <Button
                   as={Link}
                   to="/findcars"
                   className="btn btn-success text-white"
                 >
                   Mulai Sewa Mobil
-                </motion.button>
+                </Button>
               </motion.div>
             </Col>
           </Row>

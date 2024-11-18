@@ -1,4 +1,4 @@
-import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
+import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
@@ -33,7 +33,7 @@ function Login() {
     },
     onSuccess: (data) => {
       dispatch(setToken(data?.token));
-      
+
       navigate({ to: "/" });
     },
     onError: (err) => {
@@ -65,6 +65,10 @@ function Login() {
             }}
             className="bg-trasnparent rounded-4 shadow-lg p-4 position-relative"
           >
+            <Button variant="" as={Link} to="/" className="position-absolute ">
+              <i className="bi bi-arrow-left fw-bold text-black fs-3"></i>
+            </Button>
+
             <div className="text-center mt-4">
               <h2 className="fw-bold">Login</h2>
             </div>

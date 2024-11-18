@@ -7,16 +7,20 @@ import { useEffect } from "react";
 import { ListGroup } from "react-bootstrap";
 import { useQuery } from "@tanstack/react-query";
 import { profile } from "../service/auth";
+import Protected from "../components/Auth/Protected";
 
 export const Route = createLazyFileRoute("/profile")({
-  component: Profile,
+  component: () => (
+    <Protected roles={[1, 2]}>
+      <Profile />
+    </Protected>
+  ),
 });
 
 function Profile() {
-  const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
 
-  const { data, isSuccess, isError } = useQuery({
+  const { data } = useQuery({
     queryKey: ["profile"],
     queryFn: profile,
     enabled: !!token,

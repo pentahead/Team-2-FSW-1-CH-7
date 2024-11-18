@@ -152,7 +152,7 @@ const ScreenAvailables = () => {
   );
 };
 
-function CreateAvailable({  id, setId }) {
+function CreateAvailable({ id, setId }) {
   const [availableStatus, setAvailableStatus] = useState(""); // Ganti dengan field yang sesuai
 
   const queryClient = useQueryClient();
@@ -189,7 +189,7 @@ function CreateAvailable({  id, setId }) {
 
   useEffect(() => {
     if (isSuccess) {
-      setAvailableStatus(data.type_name);
+      setAvailableStatus(data.available_status);
     }
   }, [isSuccess, data, isError]);
 

@@ -53,8 +53,16 @@ function NavbarLocal() {
       <Navbar expand="lg" className="bg-whiteshadow-sm">
         <Container
           fluid
-          className="d-flex flex-row justify-content-end  gap-2  "
+          className="d-flex flex-row justify-content-between  gap-2  "
         >
+          <Navbar.Brand
+            as={Link}
+            to="/"
+            style={{ cursor: "pointer" }}
+            className="fw-bold"
+          >
+            Binar Car Rental
+          </Navbar.Brand>
           <Nav>
             <Nav.Link>
               <Image
@@ -70,7 +78,7 @@ function NavbarLocal() {
               />
             </Nav.Link>
             <Dropdown as={ButtonGroup} className="border-0 me-5">
-              <Button className="bg-white px-4 text-black border-0">
+              <Button className="bg-white px-2 text-black border-0">
                 {user?.name}
               </Button>
 

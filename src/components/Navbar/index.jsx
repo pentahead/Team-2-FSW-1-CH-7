@@ -36,16 +36,6 @@ const NavigationBar = () => {
     }
   }, [isSuccess, isError, data, dispatch, handleLogout]);
 
-  const handleBrandClick = () => {
-    // Check user's role_id and redirect accordingly
-    if (user?.role_id === 1) {
-      navigate({ to: "/dashboard" });
-    } else if (user?.role_id === 2) {
-      navigate({ to: "/" });
-    } else {
-      navigate({ to: "/" });
-    }
-  };
   const logout = (event) => {
     event.preventDefault();
 
@@ -62,9 +52,11 @@ const NavigationBar = () => {
         >
           <Container>
             <Navbar.Brand
-              as="div"
-              onClick={handleBrandClick} // Handle click to navigate based on role
+              as={Link}
+              to="/"
+              // Handle click to navigate based on role
               style={{ cursor: "pointer" }}
+              className="fw-bold"
             >
               Binar Car Rental
             </Navbar.Brand>
