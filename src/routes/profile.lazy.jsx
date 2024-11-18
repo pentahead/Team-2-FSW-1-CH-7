@@ -1,10 +1,10 @@
-import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
+import { createLazyFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSelector } from "react-redux";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Card from "react-bootstrap/Card";
 import { useEffect } from "react";
-import { ListGroup } from "react-bootstrap";
+import { Button, ListGroup } from "react-bootstrap";
 import { useQuery } from "@tanstack/react-query";
 import { profile } from "../service/auth";
 import Protected from "../components/Auth/Protected";
@@ -27,9 +27,17 @@ function Profile() {
   });
 
   return (
-    <Row className="mt-5 d-flex justify-content-center">
-      <Col md={6} className="d-flex justify-content-center">
+    <Row className="mt-5 d-flex justify-content-center   ">
+      <Col md={6} className="d-flex justify-content-center ">
         <Card className="bg-transparent rounded-4 shadow-lg p-4 position-relative d-flex flex-column justify-content-center align-items-center">
+          <Button
+            variant=""
+            as={Link}
+            to="/"
+            className="position-absolute top-0 start-0"
+          >
+            <i className="bi bi-arrow-left fw-bold text-black fs-3"></i>
+          </Button>
           <div className="text-center my-4">
             <h2 className="fw-bold">Profile</h2>
           </div>
